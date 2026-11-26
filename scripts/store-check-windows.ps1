@@ -80,7 +80,9 @@ if ($identity.ProcessorArchitecture -eq $Arch) { Ok "architecture $Arch" }
 else { Fail "manifest architecture is $($identity.ProcessorArchitecture), expected $Arch" }
 if ($identity.Version -match '^\d+\.\d+\.\d+\.0$') { Ok "version $($identity.Version)" }
 else { Fail "version $($identity.Version) must be like 1.2.3.0 (the last part is reserved for the Store)" }
-$capabilities = @($manifest.Package.Capabilities.ChildNodes | ForEach-Object { $_.Name })
+# Elements only: the template's explanatory XML comments aren't capabilities.
+$capabilities = @($manifest.Package.Capabilities.ChildNodes |
+    Where-Object NodeType -eq 'Element' | ForEach-Object { $_.GetAttribute('Name') })
 $extra = $capabilities | Where-Object { $_ -ne 'runFullTrust' }
 if ($extra) { Fail "capabilities beyond runFullTrust: $($extra -join ', ')" }
 else { Ok 'only the runFullTrust capability (no internet or device access)' }
