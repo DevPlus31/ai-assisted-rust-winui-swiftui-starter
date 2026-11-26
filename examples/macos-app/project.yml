@@ -1,0 +1,85 @@
+# XcodeGen spec for the sample SwiftUI shell.
+#   make macos-app        # builds the engine, generates the project, builds the app
+#   open examples/macos-app/StarterApp.xcodeproj
+name: StarterApp
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    macOS: "15.0" # keep in sync with apple/Package.swift and .cargo/config.toml
+  createIntermediateGroups: true
+
+packages:
+  AppCore:
+    path: ../../apple
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    # Xcode fills StarterApp/Localizable.xcstrings with every UI string on
+    # build; add languages to it in Xcode.
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  StarterApp:
+    type: application
+    platform: macOS
+    sources:
+      - StarterApp
+    dependencies:
+      - package: AppCore
+    # XcodeGen writes both files below from these properties; edit them here.
+    entitlements:
+      path: StarterApp/StarterApp.entitlements
+      properties:
+        # Mac App Store apps must be sandboxed.
+        com.apple.security.app-sandbox: true
+        # Folders the user picks in the open panel (the engine moves files).
+        com.apple.security.files.user-selected.read-write: true
+        # FolderStore keeps those grants across launches as app-scoped bookmarks.
+        com.apple.security.files.bookmarks.app-scope: true
+        # No network entitlement: the engine runs entirely locally.
+    info:
+      path: StarterApp/Info.plist
+      properties:
+        CFBundleDisplayName: App Starter
+        LSApplicationCategoryType: public.app-category.productivity
+        NSHumanReadableCopyright: Released under the MIT License.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.AppStarter # replace with your own
+        PRODUCT_NAME: App Starter
+        ENABLE_HARDENED_RUNTIME: YES
+        # Ad-hoc signing for local builds; set your team for distribution.
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        # The pre-build script writes the xcframework outside DerivedData.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    scheme:
+      testTargets: [StarterAppTests]
+    preBuildScripts:
+      # Rebuilds AppFFI.xcframework + bindings when the Rust changed. Xcode
+      # passes ARCHS, so a Debug build compiles only the active architecture.
+      # SwiftPM resolves the binary target before this runs, so run
+      # `make apple` once after a fresh clone.
+      - name: Build AppCore (Rust)
+        script: '"${PROJECT_DIR}/../../scripts/build-apple.sh" "${CONFIGURATION}"'
+        basedOnDependencyAnalysis: false
+
+  # Unit tests for the window's value types. They compile Summaries.swift
+  # directly, so they need no host app (and no sandboxed app launch).
+  StarterAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - StarterAppTests
+      - StarterApp/Summaries.swift
+    dependencies:
+      - package: AppCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual

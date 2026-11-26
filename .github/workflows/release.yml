@@ -1,0 +1,102 @@
+name: Release
+
+# Push a tag like v1.2.0 to build both apps and attach them to a GitHub
+# release. Run it by hand (Actions > Release > Run workflow) to get the
+# build artifacts without publishing.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # v1.2.0 -> 1.2.0; manual runs build 0.0.0.
+  VERSION: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0' }}
+
+jobs:
+  windows:
+    name: Windows MSIX (${{ matrix.arch }})
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x64, target: x86_64-pc-windows-msvc }
+          - { arch: arm64, target: aarch64-pc-windows-msvc }
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show
+      - run: rustup target add ${{ matrix.target }}
+      - run: cargo build -p windows-app --release --target ${{ matrix.target }}
+      - name: Package
+        shell: pwsh
+        env:
+          # Optional: sign for sideloading (the Store re-signs submissions).
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: scripts/package-msix.ps1 -Target ${{ matrix.target }} -Arch ${{ matrix.arch }} -Version ($env:VERSION.TrimStart('v'))
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.arch }}
+          path: dist/*.msix
+          if-no-files-found: error
+
+  macos:
+    name: macOS app (universal)
+    runs-on: macos-15
+    env:
+      # A step's `if` can't read its own `env`, so expose the check here.
+      HAS_MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE != '' }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show
+      - run: brew install xcodegen
+      - name: Import the Developer ID certificate
+        if: env.HAS_MACOS_CERTIFICATE == 'true'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password="$(uuidgen)"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/cert.p12"
+      - name: Build, sign and notarize
+        env:
+          # All optional: without them the app is ad-hoc signed.
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: scripts/release-macos.sh "${VERSION#v}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/*.zip
+          if-no-files-found: error
+
+  publish:
+    name: GitHub release
+    if: github.ref_type == 'tag'
+    needs: [windows, macos]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

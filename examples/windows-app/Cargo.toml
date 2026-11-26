@@ -1,0 +1,29 @@
+[package]
+name = "windows-app"
+description = "Minimal WinUI 3 shell (windows-reactor) over app-core: pick a folder, analyse it, show what is in it."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "app-starter"
+path = "src/main.rs"
+
+[dependencies]
+app-core.workspace = true
+app-platform-windows.workspace = true
+# Translation files (`text.rs`).
+serde_json.workspace = true
+
+# The UI only builds for Windows; `summary` (the part that talks to the
+# engine) is platform-neutral, so its tests also run on macOS CI.
+[target.'cfg(windows)'.dependencies]
+windows-reactor.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

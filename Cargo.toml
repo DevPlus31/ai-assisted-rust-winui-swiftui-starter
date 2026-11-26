@@ -1,0 +1,58 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/app-core",
+    "crates/app-ffi",
+    "crates/app-platform-windows",
+    "crates/uniffi-bindgen",
+    "examples/windows-app",
+]
+# Run manually to regenerate committed Win32 bindings; not part of builds.
+exclude = ["tools/win32-bindgen"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+app-core = { path = "crates/app-core" }
+app-platform-windows = { path = "crates/app-platform-windows" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uniffi = "0.32"
+windows-link = "0.100"
+# Declarative WinUI 3 for the Windows sample shell (examples/windows-app).
+windows-reactor = "0.100"
+tempfile = "3"
+# File intelligence — all local, no network-capable dependencies.
+blake3 = "1.8"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "gif", "bmp", "tiff", "rayon"] }
+infer = "0.22"
+kamadak-exif = "0.6"
+lopdf = { version = "0.45", default-features = false }
+rayon = "1.12"
+# 9.0.5+ fixes RUSTSEC-2026-0367..0374 (`cargo deny check advisories`).
+zip = { version = "9.8", default-features = false, features = ["deflate"] }
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+
+# Keep line-table debug info so store crash reports of the apps that link
+# this engine can be symbolicated (Xcode writes the dSYM, MSVC the .pdb).
+# Do not set `strip` here: it would discard the debug info before Xcode/MSVC
+# can split it out.
+[profile.release]
+lto = "fat"
+codegen-units = 1
+opt-level = 3
+debug = "line-tables-only"

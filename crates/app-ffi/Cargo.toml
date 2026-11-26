@@ -1,0 +1,26 @@
+[package]
+name = "app-ffi"
+description = "UniFFI surface over app-core, packaged for Swift as the AppCore package."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+# staticlib: wrapped in AppFFI.xcframework and linked into the app binary.
+# cdylib:    read by uniffi-bindgen in library mode to generate Swift code.
+crate-type = ["lib", "staticlib", "cdylib"]
+name = "app_ffi"
+
+[dependencies]
+app-core.workspace = true
+thiserror.workspace = true
+uniffi.workspace = true
+
+[dev-dependencies]
+image.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

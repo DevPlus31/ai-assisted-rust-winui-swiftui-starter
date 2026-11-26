@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Rust workspace (engine, FFI, Windows layer, sample shell).
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Keep the windows-rs family (windows-reactor, windows-link, …) on one version.
+      windows-rs:
+        patterns: ["windows-*"]
+      uniffi:
+        patterns: ["uniffi*"]
+    open-pull-requests-limit: 10
+
+  # The standalone Win32 bindings generator.
+  - package-ecosystem: cargo
+    directory: /tools/win32-bindgen
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

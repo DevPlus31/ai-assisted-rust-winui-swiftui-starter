@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSIX manifest template for the sample shell (app-starter.exe).
+
+  Replace every REPLACE_* value with the identity Partner Center gives your
+  app (Product management > Product identity) before submitting to the Store.
+
+  Pack (Windows SDK):
+    mkdir pkg && copy target\release\app-starter.exe pkg\ && copy AppxManifest.xml pkg\
+    (add the logo PNGs referenced below to pkg\Assets\)
+    makeappx pack /d pkg /p AppStarter.msix
+  Sign for local testing with a self-signed certificate whose subject matches
+  Identity/@Publisher (the Store re-signs submitted packages).
+
+  The Windows App SDK runtime is a framework dependency: the Store installs it
+  with the app. MinVersion matches WINDOWSAPPSDK_RUNTIME_VERSION_UINT64 in
+  windows-reactor 0.100 (2.4.0.0); update both together.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="REPLACE_PACKAGE_NAME"
+    Publisher="CN=REPLACE_PUBLISHER_ID"
+    Version="1.0.0.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>App Starter</DisplayName>
+    <PublisherDisplayName>REPLACE_PUBLISHER_DISPLAY_NAME</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+    <PackageDependency
+      Name="Microsoft.WindowsAppRuntime.2"
+      Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      MinVersion="2.4.0.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application
+      Id="App"
+      Executable="app-starter.exe"
+      EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="App Starter"
+        Description="Analyse and tidy local folders. Everything runs on this PC."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- Required for a desktop (full-trust) app. The engine itself needs no
+         network or device capabilities. -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

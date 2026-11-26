@@ -1,0 +1,2 @@
+# Product and platform names used in doc comments.
+doc-valid-idents = ["WinUI", "UniFFI", "SwiftUI", "macOS", "WebP", "..", "APFS", "NTFS"]

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust (fmt, clippy, tests, bindings)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show # installs the toolchain pinned in rust-toolchain.toml
+      - run: make lint
+      - run: make test
+      - name: Win32 bindings match tools/win32-bindgen
+        run: |
+          make bindings
+          git diff --exit-code -- crates/app-platform-windows/src/edge_panel/win32/bindings.rs
+
+  coverage:
+    name: Rust coverage (≥ 80% lines)
+    runs-on: macos-15
+    needs: rust
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show
+      - run: rustup component add llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - run: make coverage
+
+  audit:
+    name: Audit (licenses, advisories, no network)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+      - run: scripts/check-no-network.sh
+
+  swift:
+    name: Swift package + sample app
+    runs-on: macos-15
+    needs: rust
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show
+      - run: make swift-test
+      - run: brew install xcodegen
+      - run: make macos-app-test # builds the app, then runs its unit tests
+      - run: make apple-release
+
+  windows:
+    name: Windows layer + WinUI sample
+    runs-on: windows-2025
+    needs: rust
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show
+      - run: cargo clippy -p app-platform-windows -p windows-app --all-targets -- -D warnings
+      - run: cargo test -p app-platform-windows -p windows-app
+      - run: cargo build -p windows-app --release

@@ -1,0 +1,81 @@
+# cargo-deny: licenses, security advisories, banned crates and sources.
+#   make audit        (or: cargo deny check)
+# Covers every target the apps ship on, so Windows-only crates are checked
+# from macOS too.
+
+[graph]
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+]
+all-features = true
+
+[advisories]
+# RustSec advisories: vulnerable, unmaintained and yanked crates fail.
+yanked = "deny"
+ignore = [
+    # basic-toml is unmaintained, with no safe upgrade yet. It only parses
+    # askama's template config inside UniFFI's code generator at build
+    # time; nothing ships in the apps. Drop this once UniFFI moves off it.
+    { id = "RUSTSEC-2026-0374", reason = "build-time only, via uniffi_bindgen -> askama" },
+]
+
+[licenses]
+# Compatible with shipping MIT-licensed apps through the stores.
+allow = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "0BSD",
+    "CC0-1.0",
+    "Unlicense",
+    "Unicode-3.0",
+    # UniFFI. File-level copyleft: fine to link; changes to UniFFI's own
+    # files would have to be shared.
+    "MPL-2.0",
+]
+confidence-threshold = 0.9
+# Keep the list stable as dependencies come and go.
+unused-allowed-license = "allow"
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+# The engine promises to run entirely locally. Any of these appearing in
+# the graph (directly or transitively) fails the check. Add a crate here
+# rather than removing one.
+deny = [
+    { crate = "reqwest", reason = "no networking: everything runs locally" },
+    { crate = "ureq", reason = "no networking: everything runs locally" },
+    { crate = "hyper", reason = "no networking: everything runs locally" },
+    { crate = "h2", reason = "no networking: everything runs locally" },
+    { crate = "isahc", reason = "no networking: everything runs locally" },
+    { crate = "curl", reason = "no networking: everything runs locally" },
+    { crate = "curl-sys", reason = "no networking: everything runs locally" },
+    { crate = "surf", reason = "no networking: everything runs locally" },
+    { crate = "attohttpc", reason = "no networking: everything runs locally" },
+    { crate = "minreq", reason = "no networking: everything runs locally" },
+    { crate = "tungstenite", reason = "no networking: everything runs locally" },
+    { crate = "native-tls", reason = "no networking: everything runs locally" },
+    { crate = "rustls", reason = "no networking: everything runs locally" },
+    { crate = "openssl", reason = "no networking: everything runs locally" },
+    { crate = "openssl-sys", reason = "no networking: everything runs locally" },
+    { crate = "mio", reason = "no networking: everything runs locally" },
+    { crate = "socket2", reason = "no networking: everything runs locally" },
+    # Downloads the Windows App SDK from NuGet at build time. Opt in on
+    # purpose (see README) and remove this line in that app's copy.
+    { crate = "windows-reactor-setup", reason = "downloads the Windows App SDK during the build" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

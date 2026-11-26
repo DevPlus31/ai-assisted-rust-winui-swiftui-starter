@@ -1,0 +1,20 @@
+# --- Windows (Microsoft Store / WACK) -------------------------------------
+# +crt-static     : no VCRUNTIME140.dll dependency, so the MSIX needs no
+#                   VCLibs framework package for our own binary.
+# control-flow-guard / CETCOMPAT : exploit mitigations checked by the
+#                   Windows App Certification Kit "Binary analyzer" and
+#                   recommended for Store submissions. ASLR, high-entropy VA
+#                   and DEP/NX are already on by default for MSVC targets.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static", "-C", "control-flow-guard", "-C", "link-arg=/CETCOMPAT"]
+
+# CETCOMPAT is x64-only; ARM64 uses its own (always-on) mitigations.
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static", "-C", "control-flow-guard"]
+
+# --- Apple (Mac App Store) ------------------------------------------------
+# Keep in sync with `.macOS(.v15)` in apple/Package.swift and the deployment
+# target in examples/macos-app/project.yml so the
+# static library never references symbols newer than the app's minimum OS.
+[env]
+MACOSX_DEPLOYMENT_TARGET = "15.0"

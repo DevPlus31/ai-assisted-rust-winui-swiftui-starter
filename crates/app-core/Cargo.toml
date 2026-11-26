@@ -1,0 +1,24 @@
+[package]
+name = "app-core"
+description = "Shared Rust core: local file intelligence, workflows and storage shared by the macOS and Windows apps."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+blake3.workspace = true
+image.workspace = true
+infer.workspace = true
+kamadak-exif.workspace = true
+lopdf.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# Unique temp files for atomic saves (cleaned up on failure).
+tempfile.workspace = true
+zip.workspace = true
+
+[lints]
+workspace = true
