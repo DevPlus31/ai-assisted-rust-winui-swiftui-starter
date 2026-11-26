@@ -219,7 +219,9 @@ Neither store can be tested end to end before submission, because both include h
 - **Manifest:** only the `runFullTrust` capability and a dependency on the Windows App SDK runtime.
 - **Certification kit:** `scripts/run-wack.ps1` runs the Windows App Certification Kit, Microsoft's own pre-submission test. It installs the package, so it needs admin rights and trusts a throwaway test certificate; use it in CI or a test VM, not on your own machine.
 
-Placeholders (`com.example.*`, `REPLACE_*`) only produce warnings.
+Placeholders (`com.example.*`, `REPLACE*`) only produce warnings.
+
+Expect one known finding from the certification kit: the *optional* "Blocked executables" test flags the exe's import of `ShellExecuteW`, which comes from `windows-reactor`, and a byte sequence that happens to read "dnX". Optional tests don't block certification. The exe embeds `examples/windows-app/app.manifest` (per-monitor DPI awareness, supported Windows versions, `asInvoker`) through `build.rs`, which the kit's DPI awareness test requires.
 
 ## Releasing
 
