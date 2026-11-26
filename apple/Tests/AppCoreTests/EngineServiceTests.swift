@@ -90,11 +90,14 @@ final class EngineServiceTests {
     @Test func cancellingTheSwiftTaskCancelsTheJob() async throws {
         let service = try makeService()
         let job = EngineJob()
+        // Copied out first so the task captures only Sendable values (not
+        // this test instance, which `Self` inside the closure would).
+        let cancelledText = Self.cancelledText
         let task = Task {
             try await service.run(job: job, onProgress: { _ in }) { _, job in
                 // Stand-in for a long engine call that checks its job.
                 while !job.isCancelled() { Thread.sleep(forTimeInterval: 0.01) }
-                throw AppError.Cancelled(message: "Cancelled.", text: Self.cancelledText)
+                throw AppError.Cancelled(message: "Cancelled.", text: cancelledText)
             }
         }
 
