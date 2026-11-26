@@ -1,7 +1,7 @@
 # Developer entry points (macOS host). Nothing here links a Windows binary:
 # `windows-check` type-checks and lints the Windows code, and CI builds it
 # on windows-2025.
-.PHONY: demo test lint audit coverage l10n windows-check bindings apple apple-release swift-test macos-app macos-app-test release-macos clean
+.PHONY: demo test lint audit coverage l10n windows-check bindings apple apple-release swift-test macos-app macos-app-test release-macos store-check-macos clean
 
 # Minimum Rust line coverage (`make coverage`, CI).
 COVERAGE_MIN ?= 80
@@ -59,6 +59,9 @@ macos-app-test: macos-app ## Unit tests for the SwiftUI sample's value types
 
 release-macos: ## Universal, zipped macOS app in dist/ (see scripts/release-macos.sh)
 	scripts/release-macos.sh $(VERSION)
+
+store-check-macos: release-macos ## Optional Mac App Store pre-flight on the release build
+	python3 -I scripts/store-check-macos.py "target/macos-release/Build/Products/Release/App Starter.app"
 
 clean:
 	cargo clean

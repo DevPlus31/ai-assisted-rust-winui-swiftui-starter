@@ -201,6 +201,26 @@ CI also checks that `bindings.rs` matches what `tools/win32-bindgen` generates, 
 - After each edit to a `.rs` file, `rustfmt` formats it.
 - Before Claude finishes, `make lint` runs. On failure the errors go back to Claude to fix, once per stop so it can't loop.
 
+## Store pre-flight checks (optional)
+
+Neither store can be tested end to end before submission, because both include human review. But many rejections come from rules a machine can check. These checks are optional and kept out of regular CI: run the **Store checks** workflow by hand, or set the repository variable `STORE_CHECKS` to `true` to run it on every release tag.
+
+**Mac App Store** (`make store-check-macos`, or `scripts/store-check-macos.py <App.app>`) checks the release build:
+
+- **Signing and sandbox:** a valid code signature, App Sandbox on, only the expected entitlements, no network entitlement and no debugging entitlement.
+- **`Info.plist`:** the required keys and version formats.
+- **Privacy manifest:** `PrivacyInfo.xcprivacy` must declare a reason for every "required reason" API the binary actually imports. The engine reads file modification dates, so it declares `FileTimestamp` with reasons `3B52.1` and `C617.1`.
+- **Binary imports:** no networking or runtime code-loading functions (`socket`, `connect`, `getaddrinfo`, `dlopen`, URLSession…). This holds because the app is linked with dead-code stripping, which removes Rust's unused networking code.
+
+**Microsoft Store** (`scripts/store-check-windows.ps1`, after packaging) checks the exe and package:
+
+- **Exe imports:** no networking DLLs, and the C runtime linked statically.
+- **Exploit mitigations:** ASLR, DEP, Control Flow Guard, and CET on x64.
+- **Manifest:** only the `runFullTrust` capability and a dependency on the Windows App SDK runtime.
+- **Certification kit:** `scripts/run-wack.ps1` runs the Windows App Certification Kit, Microsoft's own pre-submission test. It installs the package, so it needs admin rights and trusts a throwaway test certificate; use it in CI or a test VM, not on your own machine.
+
+Placeholders (`com.example.*`, `REPLACE_*`) only produce warnings.
+
 ## Releasing
 
 Push a tag such as `v1.2.0`. `.github/workflows/release.yml` builds an MSIX for x64 and for ARM64 and a universal, zipped macOS app, then attaches them to a GitHub release. Run the workflow by hand to get the builds without publishing.

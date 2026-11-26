@@ -1,0 +1,51 @@
+name: Store checks
+
+# Optional pre-flight checks for the Mac App Store and the Microsoft Store.
+# Not part of regular CI. Run by hand (Actions > Store checks > Run
+# workflow), or on release tags after setting the repository variable
+# STORE_CHECKS to "true" (Settings > Secrets and variables > Actions >
+# Variables).
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  macos:
+    name: Mac App Store pre-flight
+    if: github.event_name == 'workflow_dispatch' || vars.STORE_CHECKS == 'true'
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show
+      - run: brew install xcodegen
+      - run: make store-check-macos
+
+  windows:
+    name: Microsoft Store pre-flight (x64)
+    if: github.event_name == 'workflow_dispatch' || vars.STORE_CHECKS == 'true'
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show
+      - run: cargo build -p windows-app --release --target x86_64-pc-windows-msvc
+      - shell: pwsh
+        run: scripts/package-msix.ps1 -Target x86_64-pc-windows-msvc -Arch x64
+      - name: Imports, mitigations, manifest
+        shell: pwsh
+        run: scripts/store-check-windows.ps1 -Arch x64
+      - name: Windows App Certification Kit
+        shell: pwsh
+        run: scripts/run-wack.ps1 -Arch x64
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wack-report
+          path: target/wack-x64.xml
+          if-no-files-found: ignore

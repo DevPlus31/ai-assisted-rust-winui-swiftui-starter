@@ -15,6 +15,9 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "6.0"
+    # Drops unused code, including the parts of Rust's std the engine never
+    # calls (std::net among them). XcodeGen doesn't set Xcode's usual default.
+    DEAD_CODE_STRIPPING: YES
     # Xcode fills StarterApp/Localizable.xcstrings with every UI string on
     # build; add languages to it in Xcode.
     SWIFT_EMIT_LOC_STRINGS: YES
@@ -45,6 +48,9 @@ targets:
       path: StarterApp/Info.plist
       properties:
         CFBundleDisplayName: App Starter
+        # From the build settings, so `release-macos.sh 1.2.0` sets them.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.productivity
         NSHumanReadableCopyright: Released under the MIT License.
     settings:
@@ -57,6 +63,11 @@ targets:
         CODE_SIGN_STYLE: Manual
         # The pre-build script writes the xcframework outside DerivedData.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
+      configs:
+        # No debugging entitlement (get-task-allow) in release builds:
+        # notarization rejects it.
+        Release:
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
     scheme:
       testTargets: [StarterAppTests]
     preBuildScripts:
