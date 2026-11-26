@@ -27,7 +27,7 @@ jobs:
           - { arch: x64, target: x86_64-pc-windows-msvc }
           - { arch: arm64, target: aarch64-pc-windows-msvc }
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: rustup show
       - run: rustup target add ${{ matrix.target }}
       - run: cargo build -p windows-app --release --target ${{ matrix.target }}
@@ -51,7 +51,7 @@ jobs:
       # A step's `if` can't read its own `env`, so expose the check here.
       HAS_MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE != '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: rustup show
       - run: brew install xcodegen
       - name: Import the Developer ID certificate

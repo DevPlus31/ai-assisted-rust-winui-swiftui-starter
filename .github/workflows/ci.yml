@@ -16,7 +16,7 @@ jobs:
     name: Rust (fmt, clippy, tests, bindings)
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: rustup show # installs the toolchain pinned in rust-toolchain.toml
       - run: make lint
       - run: make test
@@ -30,7 +30,7 @@ jobs:
     runs-on: macos-15
     needs: rust
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: rustup show
       - run: rustup component add llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
@@ -40,7 +40,7 @@ jobs:
     name: Audit (licenses, advisories, no network)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
@@ -51,7 +51,7 @@ jobs:
     runs-on: macos-15
     needs: rust
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: rustup show
       - run: make swift-test
       - run: brew install xcodegen
@@ -63,7 +63,7 @@ jobs:
     runs-on: windows-2025
     needs: rust
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: rustup show
       - run: cargo clippy -p app-platform-windows -p windows-app --all-targets -- -D warnings
       - run: cargo test -p app-platform-windows -p windows-app
