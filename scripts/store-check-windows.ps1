@@ -87,8 +87,8 @@ else { Ok 'only the runFullTrust capability (no internet or device access)' }
 $runtime = $manifest.Package.Dependencies.PackageDependency | Where-Object { $_.Name -like 'Microsoft.WindowsAppRuntime.*' }
 if ($runtime) { Ok "depends on $($runtime.Name) $($runtime.MinVersion)" }
 else { Fail 'no PackageDependency on Microsoft.WindowsAppRuntime (WinUI 3 needs it)' }
-if ((Get-Content $manifestPath -Raw) -match 'REPLACE_') {
-    Warn 'placeholder identity (REPLACE_*): set the values from Partner Center before submitting'
+if ((Get-Content $manifestPath -Raw) -match 'REPLACE') {
+    Warn 'placeholder identity (REPLACE*): set the values from Partner Center before submitting'
 }
 
 # --- Windows App Certification Kit ------------------------------------------

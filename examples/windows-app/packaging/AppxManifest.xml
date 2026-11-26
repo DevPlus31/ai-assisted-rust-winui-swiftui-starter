@@ -23,7 +23,7 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="REPLACE_PACKAGE_NAME"
+    Name="REPLACE.PackageName"
     Publisher="CN=REPLACE_PUBLISHER_ID"
     Version="1.0.0.0"
     ProcessorArchitecture="x64" />
